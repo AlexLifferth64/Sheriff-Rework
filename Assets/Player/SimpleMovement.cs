@@ -17,6 +17,7 @@ public class SimpleMovement : MonoBehaviour
     public bool isOnLeftWall = false;
 
     private bool onJumpable = false;
+    private bool onNoWall = false;
 
     public float defaultGravity = 10;
 
@@ -62,8 +63,9 @@ public class SimpleMovement : MonoBehaviour
 
     public bool canMove = true;
 
-    public LayerMask ground;
-    public LayerMask jumpable;
+    [SerializeField] private LayerMask ground;
+    [SerializeField] private LayerMask jumpable;
+    [SerializeField] private LayerMask noWall;
 
     //public GameObject WallJumpParticles;
     //public GameObject CritWallJumpParticles;
@@ -74,6 +76,7 @@ public class SimpleMovement : MonoBehaviour
 
     DodgeRoll dodgeroll;
     Melee melee;
+    LadderMovement ladder;
 
     //https://www.youtube.com/watch?v=RFix_Kg2Di0 jump buffer and coyote time
 
@@ -86,6 +89,7 @@ public class SimpleMovement : MonoBehaviour
         playerCollider = GetComponent<BoxCollider2D>();
         dodgeroll = GetComponent<DodgeRoll>();
         melee = GetComponent<Melee>();
+        ladder = GetComponent<LadderMovement>();
 
         //combatScript = GetComponent<Combat>();
         //gunScript = GetComponent<Gun>();
@@ -94,7 +98,7 @@ public class SimpleMovement : MonoBehaviour
         initColliderSizeY = playerCollider.size.y;
         //recentHighVelX = initJumpSpeed;
 
-        jump = "up";
+        jump = "none";
         //jumpSound.time = 0.12f;
     }
 
@@ -153,15 +157,7 @@ public class SimpleMovement : MonoBehaviour
                 isGliding = false;
         }
 
-        if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
-        {
-            yDir = "up";
-            isWallRunning = !isWallRunning;
-        }
-        else if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
-        {
-            yDir = "up";
-        }
+        
         
         if (Input.GetKeyDown(KeyCode.Space)) // MAYBE CHANGE TO CAN JUMP
         {
@@ -174,24 +170,16 @@ public class SimpleMovement : MonoBehaviour
             jump = "none";
         }
 
-        /*if(jump == "up" && slide && (xDir == "right" || xDir == "left"))
+        if (Input.GetKeyDown(KeyCode.W) || Input.GetKeyDown(KeyCode.UpArrow))
         {
-            *//*if (!dodgeroll.isRolling)
-            {   
-                jump = "none";
-                jumpBufferCounter = -1;
-                StartCoroutine(dodgeroll.Roll());
-                Debug.Log("LOL");
-
-            }
-            else // jump if already rolling
-            {
-                jumpBufferCounter = jumpBufferTime;
-                jump = "up";
-                Debug.Log("GAHH");
-            }*//*
+            yDir = "up";
+            //isWallRunning = !isWallRunning;
         }
-        else */if(Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
+        else if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+        {
+            yDir = "up";
+        }
+        else if(Input.GetKeyDown(KeyCode.S) || Input.GetKeyDown(KeyCode.DownArrow))
         {
             if (!isGrounded && !isOnLeftWall && !isOnRightWall)
                 isWallRunning = !isWallRunning;
@@ -241,7 +229,7 @@ public class SimpleMovement : MonoBehaviour
         //isGrounded = Physics2D.OverlapBox(groundCheck.position, new Vector2(initColliderSizeX - 0.05f, 0.01f), 0, ground);
         isOnRightWall = Physics2D.OverlapBox(new Vector2(rightCheck.position.x, rightCheck.position.y + +0.0625f), new Vector2(0.01f, initColliderSizeY - 0.05f), 0, ground) && !isGrounded; // 0.0625f is from Collider offset
         isOnLeftWall = Physics2D.OverlapBox(new Vector2(leftCheck.position.x, leftCheck.position.y + 0.0625f), new Vector2(0.01f, initColliderSizeY - 0.05f), 0, ground) && !isGrounded;
-        isGrounded = Physics2D.OverlapBox(groundCheck.position, new Vector2(initColliderSizeX - 0.05f, 0.01f), 0, ground);
+        isGrounded = Physics2D.OverlapBox(groundCheck.position, new Vector2(initColliderSizeX - 0.05f, 0.01f), 0, ground) || ladder.GetIsOnLadder();
 
         jumpableObj = Physics2D.OverlapBox(groundCheck.position, new Vector2(initColliderSizeX - 0.05f, 0.01f), 0, jumpable);
         onJumpable = false;
@@ -251,7 +239,7 @@ public class SimpleMovement : MonoBehaviour
             onJumpable = true;
         }
 
-        if (rb.velocity.y < -7 && !dodgeroll.isRolling) // Caps wall sliding speed
+        if (rb.velocity.y < -7 && !dodgeroll.isRolling && !ladder.GetIsOnLadder()) // Caps wall sliding speed
         {
             if (isOnLeftWall || isOnRightWall)
             {
@@ -263,8 +251,6 @@ public class SimpleMovement : MonoBehaviour
             else if (rb.velocity.y < -150)
                 rb.gravityScale = 0;
         }
-        else if(!dodgeroll.isRolling)
-            rb.gravityScale = defaultGravity;
 
         if (isGrounded || isOnLeftWall || isOnRightWall)
         {
@@ -278,7 +264,7 @@ public class SimpleMovement : MonoBehaviour
 
                 if (!slide)
                     rb.gravityScale = 0;
-                else
+                else if(!ladder.GetIsOnLadder())
                     rb.gravityScale = defaultGravity;
 
                 isGliding = false;
@@ -287,7 +273,7 @@ public class SimpleMovement : MonoBehaviour
                 //groundObj = Physics2D.OverlapBox(groundCheck.position, new Vector2(initColliderSizeX - 0.05f, 0.01f), 0, ground).gameObject;
             }
         }
-        else
+        else if(!ladder.GetIsOnLadder())
         {
             rb.gravityScale = defaultGravity;
         }
@@ -341,82 +327,99 @@ public class SimpleMovement : MonoBehaviour
                 rb.velocity = new Vector2(0, rb.velocity.y);
         }
 
-        // Standard jump      
         if (jumpBufferCounter > 0/* jump == "up"*/ && (isGrounded || isOnLeftWall || isOnRightWall || onJumpable) && !dodgeroll.isRolling)//jump == "up" || jumpBufferCounter > 0f) && (isGrounded == true || coyoteTimeCounter > 0f))
         {
-            jumpBufferCounter = 0;
-            standingSlideCounter = standingSlideTime;
+            Jump();
+        }
 
-            isGliding = true;
-            totalJumps--;
-            jump = "none";
-            jumpSpeed = initJumpSpeed;
-
-            //leftRay = Physics2D.Raycast(rb.transform.position, Vector2.left, 1, ground);
-            //rightRay = Physics2D.Raycast(rb.transform.position, Vector2.right, 1, ground);
-            jumpParticles.Play();
-            //jumpSound.Play();
-
-            //StartCoroutine(ShortHop());
-
-            if (isOnLeftWall)// && totalWallJumps > 0)
+            /*if (isJumping && jump == "up2" && jumpNum > 0)
             {
-                //isJumping = true;
-                canMove = false;
-                sr.flipX = false;
-                lastXdir = "right";
-
-                rb.velocity = new Vector2(runCap + 3, initJumpSpeed);
-                
-                StartCoroutine(WallMoveTime());
+                rb.gravityScale = 0;
+                jumpNum -= Time.deltaTime;
             }
-            else if (isOnRightWall/* || timeFromRightWall > 0)*/)
+            else if (isJumping)
             {
-                //isJumping = true;
-                canMove = false;
-                sr.flipX = true;
-                lastXdir = "left";
+                rb.gravityScale = defaultGravity;
+                //if(jump == "none")
+                //rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y / 2);
+                isJumping = false;
+                jumpNum = initJumpNum;
+                jumpSpeed = initJumpSpeed;
+            }*/
+            //stairRay = Physics2D.Raycast(new Vector2(transform.position.x, transform.position.y + 0.08f), Vector2.right, 0.25f, ground);
+            /*Debug.DrawRay(new Vector2(rightCheck.position.x + 0.015f, rightCheck.position.y + 1), new Vector2(0, -1.7f), Color.red);
+            Debug.DrawRay(transform.position, new Vector2(2, 0), Color.red);*/
+        }
 
-                rb.velocity = new Vector2(-runCap - 3, initJumpSpeed);
-                
-                StartCoroutine(WallMoveTime());
-            }
-            else if(onJumpable)
+    public void Jump()
+    {
+        
+        jumpBufferCounter = 0;
+        standingSlideCounter = standingSlideTime;
+
+        isGliding = true;
+        totalJumps--;
+        jump = "none";
+        jumpSpeed = initJumpSpeed;
+
+        //leftRay = Physics2D.Raycast(rb.transform.position, Vector2.left, 1, ground);
+        //rightRay = Physics2D.Raycast(rb.transform.position, Vector2.right, 1, ground);
+        jumpParticles.Play();
+        //jumpSound.Play();
+
+        //StartCoroutine(ShortHop());
+
+        if (isOnLeftWall)// && totalWallJumps > 0)
+        {
+                //isJumping = true;
+            canMove = false;
+            sr.flipX = false;
+            lastXdir = "right";
+
+            rb.velocity = new Vector2(runCap + 3, initJumpSpeed);
+
+            StartCoroutine(WallMoveTime());
+        }
+        else if (isOnRightWall/* || timeFromRightWall > 0)*/)
+        {
+            //isJumping = true;
+            canMove = false;
+            sr.flipX = true;
+            lastXdir = "left";
+
+            rb.velocity = new Vector2(-runCap - 3, initJumpSpeed);
+
+            StartCoroutine(WallMoveTime());
+        }
+        else if (onJumpable)
+        {
+            if (jumpableObj.CompareTag("Flask"))
             {
                 rb.velocity = new Vector2(rb.velocity.x + jumpableObj.GetComponent<Rigidbody2D>().velocity.x, jumpSpeed);
                 jumpableObj.GetComponent<Rigidbody2D>().velocity = new Vector2(jumpableObj.GetComponent<Rigidbody2D>().velocity.x, jumpableObj.GetComponent<Rigidbody2D>().velocity.y - 10);
                 jumpableObj.transform.position = groundCheck.transform.position;
             }
-            else //&& timeFromLeftWall <= 0 && timeFromRightWall <= 0) // add this and make the whole jump thing an if else for optimization
+        }
+        else if(onNoWall) // Ground objects that you can't wall jump off of
+        {
+            if(slide && xDir == "none")
             {
-                //isJumping = true;
-
-                rb.velocity = new Vector2(rb.velocity.x, jumpSpeed);
-                /*else
-                    rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y + jumpSpeed);*/
+                transform.position = new Vector2(transform.position.x, transform.position.y - 0.1f);
             }
-
-            //timeFromLeftWall = 0;
-            //timeFromRightWall = 0;
         }
+        else //&& timeFromLeftWall <= 0 && timeFromRightWall <= 0) // add this and make the whole jump thing an if else for optimization
+        {
+            //isJumping = true;
 
-        /*if (isJumping && jump == "up2" && jumpNum > 0)
-        {
-            rb.gravityScale = 0;
-            jumpNum -= Time.deltaTime;
+            rb.velocity = new Vector2(rb.velocity.x, jumpSpeed);
+            /*else
+                rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y + jumpSpeed);*/
         }
-        else if (isJumping)
-        {
-            rb.gravityScale = defaultGravity;
-            //if(jump == "none")
-            //rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y / 2);
-            isJumping = false;
-            jumpNum = initJumpNum;
-            jumpSpeed = initJumpSpeed;
-        }*/
-        //stairRay = Physics2D.Raycast(new Vector2(transform.position.x, transform.position.y + 0.08f), Vector2.right, 0.25f, ground);
-        /*Debug.DrawRay(new Vector2(rightCheck.position.x + 0.015f, rightCheck.position.y + 1), new Vector2(0, -1.7f), Color.red);
-        Debug.DrawRay(transform.position, new Vector2(2, 0), Color.red);*/
+    }
+
+    public float GetJumpBufferCounter()
+    {
+        return jumpBufferCounter;
     }
 
     private IEnumerator ShortHop()

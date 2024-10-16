@@ -8,11 +8,13 @@ TagManager:
   - Flask
   - Crosshair
   - Target
+  - Ladder
+  - PassThroughPlatform
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Target
   - Water
   - UI
   - Ground
@@ -21,7 +23,7 @@ TagManager:
   - Bullet
   - Jumpable
   - Crosshair
-  - 
+  - NoWall
   - 
   - 
   - 

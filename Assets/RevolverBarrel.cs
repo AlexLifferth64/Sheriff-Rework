@@ -10,14 +10,12 @@ public class RevolverBarrel : MonoBehaviour
     public bool isReloading;
     public bool isPenalized = false;
 
-    private IEnumerator delayedReloadEnum = null;
     private bool delayedReloading = false;
 
     private Vector3 startPos;
 
     private int shakeCount = 0; // used for barrel shaking effect
 
-    private Gun gun;
     private Transform player;
 
     private void Start()
@@ -33,7 +31,7 @@ public class RevolverBarrel : MonoBehaviour
 
         startPos = new Vector3(transform.position.x, transform.position.y, 10);
 
-        gun = GameObject.Find("Player").GetComponent<Gun>();
+        //gun = GameObject.Find("Player").GetComponent<Gun>();
         player = GameObject.Find("Player").transform;
     }
 
@@ -106,7 +104,6 @@ public class RevolverBarrel : MonoBehaviour
                 }
                 UpdateBarrelVisuals();
             }*/
-            Debug.Log(delayedReloadEnum);
 
             if (Input.GetKeyDown(KeyCode.Mouse0) || Input.GetKeyDown(KeyCode.B))
             {
