@@ -6,10 +6,15 @@ public class Respawn : MonoBehaviour
     Rigidbody2D rb;
     public Vector2 spawnPoint = new Vector2(0, 0);
 
+    Transform[] checkpoints;// = gameObject.GetComponentsInChildren<Transform>();
+    int checkNum = 0;
+
+
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        checkpoints = GameObject.Find("Checkpoints").GetComponentsInChildren<Transform>();
     }
 
     // Update is called once per frame
@@ -35,6 +40,23 @@ public class Respawn : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.Minus))
         {
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
+        }
+
+        if (Input.GetKeyDown(KeyCode.LeftBracket))
+        {
+            if (checkNum > 0)
+            {
+                checkNum--;
+                transform.position = checkpoints[checkNum].position;
+            }
+        }
+        else if (Input.GetKeyDown(KeyCode.RightBracket))
+        {
+            if (checkNum < checkpoints.Length - 1)
+            {
+                checkNum++;
+                transform.position = checkpoints[checkNum].position;
+            }
         }
     }
     public void InitiateRespawn()
