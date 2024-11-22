@@ -10,7 +10,7 @@ public class Melee : MonoBehaviour
 
     public bool isAttacking = false;
     public bool isParrying = false;
-    public bool isWallCling = false;
+    //public bool isWallCling = false;
 
     /*[SerializeField] GameObject grenadePrefab;
     private GameObject grenade;*/
@@ -18,8 +18,8 @@ public class Melee : MonoBehaviour
     [SerializeField] private GameObject leftHitbox;
     [SerializeField] private GameObject rightHitbox;
 
-    [SerializeField] private GameObject leftWallClingHitbox;
-    [SerializeField] private GameObject rightWallClingHitbox;
+    //[SerializeField] private GameObject leftWallClingHitbox;
+    //[SerializeField] private GameObject rightWallClingHitbox;
 
     /*private Vector2 mousePos;
     private Vector2 lookDir;
@@ -63,17 +63,17 @@ public class Melee : MonoBehaviour
         if (leftHitbox.active || rightHitbox.active)
         {
             Collider2D[] objects;
-            Collider2D[] wallClingObjects;
+            //Collider2D[] wallClingObjects;
 
             if (leftHitbox.active)
             {
                 objects = Physics2D.OverlapCircleAll(leftHitbox.transform.position, leftHitbox.transform.localScale.x / 2, enemy);
-                wallClingObjects = Physics2D.OverlapBoxAll(leftWallClingHitbox.transform.position, new Vector2(leftWallClingHitbox.transform.localScale.x / 2, leftHitbox.transform.localScale.x / 2), 0, ground);
+                //wallClingObjects = Physics2D.OverlapBoxAll(leftWallClingHitbox.transform.position, new Vector2(leftWallClingHitbox.transform.localScale.x / 2, leftHitbox.transform.localScale.x / 2), 0, ground);
             }
             else // rightHitbox.active
             {
                 objects = Physics2D.OverlapCircleAll(rightHitbox.transform.position, rightHitbox.transform.localScale.x / 2, enemy);
-                wallClingObjects = Physics2D.OverlapBoxAll(rightWallClingHitbox.transform.position, new Vector2(rightWallClingHitbox.transform.localScale.x / 2, leftHitbox.transform.localScale.x / 2), 0, ground);
+                //wallClingObjects = Physics2D.OverlapBoxAll(rightWallClingHitbox.transform.position, new Vector2(rightWallClingHitbox.transform.localScale.x / 2, leftHitbox.transform.localScale.x / 2), 0, ground);
             }
 
             foreach (Collider2D obj in objects)

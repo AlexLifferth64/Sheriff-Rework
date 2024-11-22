@@ -10,6 +10,8 @@ TagManager:
   - Target
   - Ladder
   - PassThroughPlatform
+  - GrapplePoint
+  - ShotJumpPad
   layers:
   - Default
   - TransparentFX

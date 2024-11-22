@@ -17,7 +17,7 @@ public class SimpleMovement : MonoBehaviour
     public bool isOnLeftWall = false;
 
     private bool onJumpable = false;
-    private bool onNoWall = false;
+    [SerializeField] private bool onNoWall = false;
 
     public float defaultGravity = 10;
 
@@ -229,7 +229,10 @@ public class SimpleMovement : MonoBehaviour
         //isGrounded = Physics2D.OverlapBox(groundCheck.position, new Vector2(initColliderSizeX - 0.05f, 0.01f), 0, ground);
         isOnRightWall = Physics2D.OverlapBox(new Vector2(rightCheck.position.x, rightCheck.position.y + +0.0625f), new Vector2(0.01f, initColliderSizeY - 0.05f), 0, ground) && !isGrounded; // 0.0625f is from Collider offset
         isOnLeftWall = Physics2D.OverlapBox(new Vector2(leftCheck.position.x, leftCheck.position.y + 0.0625f), new Vector2(0.01f, initColliderSizeY - 0.05f), 0, ground) && !isGrounded;
+        //onNoWall = Physics2D.OverlapBox(groundCheck.position, new Vector2(initColliderSizeX - 0.05f, 0.01f), 0, noWall);
+
         isGrounded = Physics2D.OverlapBox(groundCheck.position, new Vector2(initColliderSizeX - 0.05f, 0.01f), 0, ground) || ladder.GetIsOnLadder();
+
 
         jumpableObj = Physics2D.OverlapBox(groundCheck.position, new Vector2(initColliderSizeX - 0.05f, 0.01f), 0, jumpable);
         onJumpable = false;
@@ -323,7 +326,7 @@ public class SimpleMovement : MonoBehaviour
                         rb.AddForce(runSpeed / 10 * Time.deltaTime * -transform.right, ForceMode2D.Impulse);
                 }
             }
-            else
+            else if(!GetComponent<Gun>().isGrappling)
                 rb.velocity = new Vector2(0, rb.velocity.y);
         }
 

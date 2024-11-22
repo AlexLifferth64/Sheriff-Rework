@@ -6,6 +6,15 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Scene1.unity
+    path: Assets/Scenes/Hard3.unity
     guid: 8c9cfa26abfee488c85f1582747f6a02
+  - enabled: 1
+    path: Assets/Scenes/Trapdoor0.unity
+    guid: ed90ecaf1bf1e0d4c985942d149a6b3b
+  - enabled: 1
+    path: Assets/Scenes/GrapplingHook1.unity
+    guid: e9933796a46af7946b3c2dff04c779f0
+  - enabled: 1
+    path: Assets/Scenes/ShotJumpPad2.unity
+    guid: 930a9feec3377084b81cded935bc594b
   m_configObjects: {}

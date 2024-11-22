@@ -31,7 +31,7 @@ public class Health : MonoBehaviour
                 transform.GetComponent<Gun>().shotTime = 0;
                 Debug.Log(GameObject.Find("Barrel").GetComponent<RevolverBarrel>().barrel[GameObject.Find("Barrel").GetComponent<RevolverBarrel>().barrelNum]);
                 GameObject.Find("Barrel").GetComponent<RevolverBarrel>().barrel[GameObject.Find("Barrel").GetComponent<RevolverBarrel>().barrelNum] = true;
-                GameObject.Find("Barrel").GetComponent<RevolverBarrel>().UpdateBarrelVisuals();
+                //GameObject.Find("Barrel").GetComponent<RevolverBarrel>().UpdateBarrelVisuals();
 
 
                 Instantiate(parryParticles, transform.position, Quaternion.identity);

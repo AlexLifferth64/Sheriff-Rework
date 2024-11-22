@@ -1,4 +1,5 @@
 using System.Collections;
+using Unity.Burst.CompilerServices;
 using Unity.Jobs.LowLevel.Unsafe;
 using UnityEngine;
 
@@ -29,6 +30,7 @@ public class Gun : MonoBehaviour
     public bool canFire = true;
     //public GameObject impactEffect;
     public LineRenderer lineRenderer;
+    private DistanceJoint2D dj;
 
     Animator gunAnimator;
 
@@ -42,6 +44,8 @@ public class Gun : MonoBehaviour
     private GameObject[] bullets;
     private bool isReloading;
     private bool isPenalized = false;
+
+    public bool isGrappling = false;
 
     private bool delayedReloading = false;
 
@@ -77,6 +81,8 @@ public class Gun : MonoBehaviour
         bullets[3] = GameObject.Find("Bullet3");
         bullets[4] = GameObject.Find("Bullet4");
         bullets[5] = GameObject.Find("Bullet5");
+
+        dj = GetComponent<DistanceJoint2D>();
 
         lineRenderer = GetComponent<LineRenderer>();
         movement = GetComponent<SimpleMovement>();
@@ -135,6 +141,12 @@ public class Gun : MonoBehaviour
                 StartCoroutine(PenaltyTime(0.4f));
             }
         }
+        else if(Input.GetKeyUp(KeyCode.Mouse0) || Input.GetKeyUp(KeyCode.B))
+        {
+            isGrappling = false;
+            dj.enabled = false;
+            movement.canMove = true;
+        }
         else
         {
             hitObject = false;
@@ -169,17 +181,27 @@ public class Gun : MonoBehaviour
             fire = false;
 
         }*/
-
-        if (lineRenderer.material.color.a > 0)
+        if (isGrappling)
         {
-            if(lineRenderer.material.color.a > 0.8)
-                lineRenderer.material.SetColor("_Color", new Color(1, 1, 1, lineRenderer.material.color.a - 0.075f));
-            else
-                lineRenderer.material.SetColor("_Color", new Color(1, 1, 0, lineRenderer.material.color.a - 0.075f));
+            lineRenderer.material.SetColor("_Color", new Color(0.4072403f, 0.05126947f, 0.01680738f, 1));
+            lineRenderer.SetPosition(0, firePoint.position);
+            lineRenderer.SetPosition(1, dj.connectedAnchor);
+            movement.canMove = false;
+            movement.isGliding = true;
         }
         else
         {
-            lineRenderer.material.SetColor("_Color", new Color(1, 1, 1, 0));
+            if (lineRenderer.material.color.a > 0)
+            {
+                if (lineRenderer.material.color.a > 0.8)
+                    lineRenderer.material.SetColor("_Color", new Color(1, 1, 1, lineRenderer.material.color.a - 0.075f));
+                else
+                    lineRenderer.material.SetColor("_Color", new Color(1, 1, 0, lineRenderer.material.color.a - 0.075f));
+            }
+            else
+            {
+                lineRenderer.material.SetColor("_Color", new Color(1, 1, 1, 0));
+            }
         }
 
         barrelTransform.rotation = Quaternion.Slerp(barrelTransform.rotation, Quaternion.Euler(0, 0, barrelNum * 60), Time.deltaTime * 15);
@@ -215,6 +237,9 @@ public class Gun : MonoBehaviour
             lineRenderer.SetPosition(0, firePoint.position);
             lineRenderer.SetPosition(1, hitInfo.point);
 
+            //barrel[BarrelNumDeterminer(barrelNum, false)] = true; // hotfix to retroactively reload the bullet fired if the player hit something
+            // fix later to be not retroactive
+
             if (hitInfo.collider.CompareTag("Enemy") || hitInfo.collider.CompareTag("Flask"))
             {
                 //barrel.barrel[barrel.barrelNum] = true;
@@ -230,6 +255,8 @@ public class Gun : MonoBehaviour
                     hitInfo.collider.GetComponent<Health>().AdjustHealth(false, 2);
                 else
                     hitInfo.collider.GetComponent<Health>().AdjustHealth(false, 1);
+
+                barrel[BarrelNumDeterminer(barrelNum, false)] = true;
             }
             else if(hitInfo.collider.CompareTag("Target"))
             {
@@ -238,6 +265,49 @@ public class Gun : MonoBehaviour
 
                 Debug.Log("TARGET");
                 hitInfo.collider.GetComponent<TargetBehavior>().Activate();
+
+                barrel[BarrelNumDeterminer(barrelNum, false)] = true;
+            }
+            else if (hitInfo.collider.CompareTag("GrapplePoint"))
+            {
+                hitObject = true;
+                StartCoroutine(TimePause(0.08f));
+
+                movement.isGliding = true;
+                dj.connectedAnchor = hitInfo.transform.position;
+                dj.enabled = true;
+
+                isGrappling = true;
+
+                Debug.Log("GrapplePoint");
+
+                barrel[BarrelNumDeterminer(barrelNum, false)] = true;
+            }
+            else if (hitInfo.collider.CompareTag("ShotJumpPad"))
+            {
+                hitObject = true;
+                StartCoroutine(TimePause(0.08f));
+
+                movement.isGliding = true;
+
+                if (hitInfo.collider.transform.localScale.x > hitInfo.collider.transform.localScale.y)
+                {
+                    if (rb.position.y > hitInfo.transform.position.y)
+                        rb.velocity = new Vector2(rb.velocity.x, 45);
+                    else
+                        rb.velocity = new Vector2(rb.velocity.x, -45);
+                }
+                else
+                {
+                    if (rb.position.x > hitInfo.transform.position.x)
+                        rb.velocity = new Vector2(45, rb.velocity.y);
+                    else
+                        rb.velocity = new Vector2(-45, rb.velocity.y);
+                }
+
+                Debug.Log("ShotJumpPad");
+
+                barrel[BarrelNumDeterminer(barrelNum, false)] = true;
             }
             else
             {

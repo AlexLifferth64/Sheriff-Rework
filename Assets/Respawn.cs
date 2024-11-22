@@ -45,18 +45,20 @@ public class Respawn : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.LeftBracket))
         {
             if (checkNum > 0)
-            {
                 checkNum--;
-                transform.position = checkpoints[checkNum].position;
-            }
+            else
+                checkNum = checkpoints.Length - 1;
+
+            transform.position = checkpoints[checkNum].position;
         }
         else if (Input.GetKeyDown(KeyCode.RightBracket))
         {
             if (checkNum < checkpoints.Length - 1)
-            {
                 checkNum++;
-                transform.position = checkpoints[checkNum].position;
-            }
+            else
+                checkNum = 0;
+
+            transform.position = checkpoints[checkNum].position;
         }
     }
     public void InitiateRespawn()
